@@ -1,6 +1,6 @@
 <?php
 
-namespace Appzcoder\CrudGenerator\Commands;
+namespace SimpleCom\AppMaker\Commands;
 
 use Illuminate\Console\GeneratorCommand;
 
