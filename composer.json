@@ -1,12 +1,12 @@
 {
     "name": "simplecom/appmaker",
     "description": ":description",
-    "license": "license",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Andy",
             "email": "horizontwin@gmail.com",
-            "homepage": "author homepage"
+            "homepage": "https://github.com/andyyapwl/appmaker"
         }
     ],
     "homepage": "https://github.com/andyyapwl/appmaker",
