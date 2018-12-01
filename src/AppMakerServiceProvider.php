@@ -7,76 +7,44 @@ use Illuminate\Support\ServiceProvider;
 class AppMakerServiceProvider extends ServiceProvider
 {
     /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = false;
+
+    /**
      * Perform post-registration booting of services.
      *
      * @return void
      */
     public function boot()
     {
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'simplecom');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'simplecom');
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->publishes([
+            __DIR__ . '/../config/appmaker.php' => config_path('appmaker.php'),
+        ]);
 
-        // Publishing is only necessary when using the CLI.
-        if ($this->app->runningInConsole()) {
-            $this->bootForConsole();
-        }
+        $this->publishes([
+            __DIR__ . '/stubs/' => base_path('resources/appmaker/'),
+        ]);
     }
 
     /**
-     * Register any package services.
+     * Register the service provider.
      *
      * @return void
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/appmaker.php', 'appmaker');
-
-        // Register the service the package provides.
-        $this->app->singleton('appmaker', function ($app) {
-            return new AppMaker;
-        });
-    }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
-    {
-        return ['appmaker'];
-    }
-    
-    /**
-     * Console-specific booting.
-     *
-     * @return void
-     */
-    protected function bootForConsole()
-    {
-        // Publishing the configuration file.
-        $this->publishes([
-            __DIR__.'/../config/appmaker.php' => config_path('appmaker.php'),
-        ], 'appmaker.config');
-
-        // Publishing the views.
-        /*$this->publishes([
-            __DIR__.'/../resources/views' => base_path('resources/views/vendor/simplecom'),
-        ], 'appmaker.views');*/
-
-        // Publishing assets.
-        /*$this->publishes([
-            __DIR__.'/../resources/assets' => public_path('vendor/simplecom'),
-        ], 'appmaker.views');*/
-
-        // Publishing the translation files.
-        /*$this->publishes([
-            __DIR__.'/../resources/lang' => resource_path('lang/vendor/simplecom'),
-        ], 'appmaker.views');*/
-
-        // Registering package commands.
-        // $this->commands([]);
+        $this->commands(
+            'SimpleCom\AppMaker\Commands\CrudCommand',
+            'SimpleCom\AppMaker\Commands\CrudControllerCommand',
+            'SimpleCom\AppMaker\Commands\CrudModelCommand',
+            'SimpleCom\AppMaker\Commands\CrudMigrationCommand',
+            'SimpleCom\AppMaker\Commands\CrudViewCommand',
+            'SimpleCom\AppMaker\Commands\CrudLangCommand',
+            'SimpleCom\AppMaker\Commands\CrudApiCommand',
+            'SimpleCom\AppMaker\Commands\CrudApiControllerCommand'
+        );
     }
 }
