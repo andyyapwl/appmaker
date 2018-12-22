@@ -1,0 +1,372 @@
+====Laravel Backend====
+1. Copy provided laravel5.6 folder to xampp\htdocs folder
+2. Rename folder to idx_Module_A
+3. 
+https://blog.pusher.com/build-rest-api-laravel-api-resources/
+
+Optional (Data Seed):
+php artisan make:seeder UsersTableSeeder
+//database/UsersTableSeeder
+ public function run()
+    {
+        // Let's clear the users table first
+        User::truncate();
+
+        $faker = \Faker\Factory::create();
+
+        // Let's make sure everyone has the same password and 
+        // let's hash it before the loop, or else our seeder 
+        // will be too slow.
+        $password = Hash::make('toptal');
+
+        User::create([
+            'name' => 'Administrator',
+            'email' => 'admin@test.com',
+            'password' => $password,
+        ]);
+
+        // And now let's generate a few dozen users for our app:
+        for ($i = 0; $i < 10; $i++) {
+            User::create([
+                'name' => $faker->name,
+                'email' => $faker->email,
+                'password' => $password,
+            ]);
+        }
+    }
+
+So let’s run the seed command:
+
+$ php artisan db:seed --class=UsersTableSeeder
+
+1. Install Composer from Composer-Setup.exe
+
+*Make sure you have XAMPP 7.3 above and install the Laravel command by
+running the command under htdocs:
+composer global require "laravel/installer"
+
+2. Windows Explorer -> C:\xampp\apache\conf\extra\httpd-vhosts.conf -> Notepad++
+   -> Add the following entry to the end of file:
+<VirtualHost mbs.com:80>
+  DocumentRoot "C:\xampp\htdocs\mbs-backend\public"
+  ServerAdmin laravel.dev
+  <Directory "C:\xampp\htdocs\mbs-backend">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+  </Directory>
+</VirtualHost>
+3. Open host file with Admin Rights and add the following entry:
+127.0.0.1 mbs.com
+
+4. Go to your mysql and create the mbs database
+
+
+5. Copy laravel5.6 folder and rename to mbs-backend
+
+Update connstr at .env file at project folder:
+DB_DATABASE=mbs
+DB_USERNAME=dbadmin
+DB_PASSWORD=password
+
+6. Run the command to create books and ratings models:
+php artisan make:model Book -m
+
+    // database/migrations/TIMESTAMP_create_books_table.php
+
+    public function up()
+    {
+      Schema::create('books', function (Blueprint $table) {
+        $table->increments('id');
+        $table->unsignedInteger('user_id');
+        $table->string('title');
+        $table->text('description');
+        $table->timestamps();
+      });
+    }
+
+php artisan make:model Rating -m
+
+		$table->increments('id');
+        $table->unsignedInteger('user_id');
+        $table->unsignedInteger('book_id');
+        $table->unsignedInteger('rating');
+        $table->timestamps();
+
+
+AppServiceProvider.php:
+use Illuminate\Support\Facades\Schema;
+public function boot()
+{
+    Schema::defaultStringLength(100);
+}
+
+7. Run the command to create the tables in the database:
+php artisan migrate
+
+8. Define the entity relationship
+// app/User.php
+
+    public function books()
+    {
+      return $this->hasMany(Book::class);
+    }
+
+// app/Book.php
+
+    public function user()
+    {
+      return $this->belongsTo(User::class);
+    }	
+	public function ratings()
+    {
+      return $this->hasMany(Rating::class);
+    }
+	
+ // app/Rating.php
+
+	public function book()
+	{
+	  return $this->belongsTo(Book::class);
+	}
+	
+9. Allowing mass assignment on some fields:
+	// app/Book.php
+    protected $fillable = ['user_id', 'title', 'description'];
+	
+	// app/Rating.php
+    protected $fillable = ['book_id', 'user_id', 'rating'];
+	
+10. Adding user authentication
+<To Do>
+
+11. Defining API routes
+	// routes/api.php
+    Route::apiResource('books', 'BookController');
+    Route::post('books/{book}/ratings', 'RatingController@store');
+	
+12. Creating the book resource
+Transform the resource into an array.
+The array is made up of the attributes we want to be converted to JSON.
+
+php artisan make:resource BookResource
+
+Once that is created, let’s open it and update the toArray() method as below:
+// app/Http/Resources/BookResource.php
+    public function toArray($request)
+    {
+      return [
+        'id' => $this->id,
+        'title' => $this->title,
+        'description' => $this->description,
+        'created_at' => (string) $this->created_at,
+        'updated_at' => (string) $this->updated_at,
+        'user' => $this->user,
+        'ratings' => $this->ratings,
+      ];
+    }
+
+13. Creating the book controller
+php artisan make:controller BookController --api
+Next, open it up and paste the following code into it:
+// app/Http/Controllers/BookController.php
+	// add these at the top of the file
+    use App\Book;
+    use App\Http\Resources\BookResource;
+
+    public function index()
+    {
+      return BookResource::collection(Book::with('ratings')->paginate(25));
+    }
+
+    public function store(Request $request)
+    {
+      $book = Book::create([
+        'user_id' => $request->user()->id,
+        'title' => $request->title,
+        'description' => $request->description,
+      ]);
+
+      return new BookResource($book);
+    }
+
+    public function show(Book $book)
+    {
+      return new BookResource($book);
+    }
+
+    public function update(Request $request, Book $book)
+    {
+      // check if currently authenticated user is the owner of the book
+      if ($request->user()->id !== $book->user_id) {
+        return response()->json(['error' => 'You can only edit your own books.'], 403);
+      }
+
+      $book->update($request->only(['title', 'description']));
+
+      return new BookResource($book);
+    }
+
+    public function destroy(Book $book)
+    {
+      $book->delete();
+
+      return response()->json(null, 204);
+    }
+
+14. Creating the rating resource
+php artisan make:resource RatingResource
+Once that is created, let’s open it and update the toArray() method as below:
+ // app/Http/Resources/RatingResource.php
+
+    public function toArray($request)
+    {
+      return [
+        'user_id' => $this->user_id,
+        'book_id' => $this->book_id,
+        'rating' => $this->rating,
+        'created_at' => (string) $this->created_at,
+        'updated_at' => (string) $this->updated_at,
+        'book' => $this->book,
+      ];
+    }
+	
+15. Creating the rating controller
+php artisan make:controller RatingController
+Next, open it up and paste the following code into it:
+// app/Http/Controllers/RatingController.php
+
+    // add these at the top of the file
+    use App\Book;
+    use App\Rating;
+    use App\Http\Resources\RatingResource;
+
+    public function store(Request $request, Book $book)
+    {
+      $rating = Rating::firstOrCreate(
+        [
+          'user_id' => $request->user()->id,
+          'book_id' => $book->id,
+        ],
+        ['rating' => $request->rating]
+      );
+
+      return new RatingResource($rating);
+    }
+	
+16. Getting average rating
+Add the line of code below to the toArray() method of app/Http/Resources/BookResource.php:
+
+    // app/Http/Resources/BookResource.php
+
+    'average_rating' => $this->ratings->avg('rating')
+
+	
+17. Authentication
+Reference: Competitor 21 CA
+-Create following tables:
+users
+
+
+authentication_token
+
+
+====NEW======
+I'm facing the same problem when using Laravel 5.6 and "tymon/jwt-auth": "1.0.*"
+Here's my approach to fix that.
+
+    Open app\Exceptions\Handler.php
+    Edit render method
+
+/**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Exception  $exception
+     * @return \Illuminate\Http\Response
+     */
+    public function render($request, Exception $exception)
+    {
+        // detect instance
+        if ($exception instanceof UnauthorizedHttpException) {
+            // detect previous instance
+            if ($exception->getPrevious() instanceof TokenExpiredException) {
+                return response()->json(['status' => 'token_expired'], $exception->getStatusCode());
+            }
+            else if ($exception->getPrevious() instanceof TokenInvalidException) {
+                return response()->json(['status' => 'token_invalid'], $exception->getStatusCode());
+            }
+            else if ($exception->getPrevious() instanceof TokenBlacklistedException) {
+                return response()->json(['status' => 'token_blacklisted'], $exception->getStatusCode());
+            }
+        }
+        return parent::render($request, $exception);
+    }
+
+also dont forget to import all of required class.
+
+<?php
+
+namespace App\Exceptions;
+
+use Exception;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Tymon\JWTAuth\Exceptions\TokenBlacklistedException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+
+class Handler extends ExceptionHandler
+{
+
+
+-Create 2 authentication middleware for User and Admin
+
+-Register the middlewares under app/kernel.php
+
+-Specify the middleware to be used in the api.php
+
+17. Deploy and Configure
+Create a folder application and copy all files and folder into it.
+Cut all files under public into project folder and delete the public folder.
+Update index.php to set the path:
+require __DIR__.'/application/vendor/autoload.php';
+$app = require_once __DIR__.'/application/bootstrap/app.php';
+
+NO NEED: php artisan serve
+
+
+=====Generator Command=====
+link: https://www.larablocks.com/package/shopex/luban-crud-generator
+php artisan crud:generate Posts --fields='title#string; content#text;}'
+
+php artisan crud:migration event_files --schema="title#string; file#binary; created_by#integer#unsigned; updated_by#integer#unsigned; is_active#boolean;"
+
+php artisan crud:model EventFile --fillable="['title', 'file','is_active','created_on','created_by','updated_by','updated_on']"
+
+php artisan crud:model Job --table="Jobs" --fillable="['title', 'description']"
+
+php artisan crud:api-controller JobController --crud-name=job --model-name=Job
+
+
+php artisan crud:model Student --table="students" --fillable="['title', 'gender', 'identificationNo','preferred_contact_number','class_name','profile_pic_url','dob','user_id','nationality_id','race_id','school_id']" --relationships="nationality#belongsTo#App\Nationality;race#belongsTo#App\Race;user#belongsTo#App\User;school#belongsTo#App\School"
+
+
+php artisan crud:api-controller StudentController --crud-name=student --model-name=Student
+
+
+php artisan crud:migration job_applicants --schema="title#string; student_id#integer;job_id#integer;created_by#integer;updated_by#integer;is_active#boolean" --foreign-keys="student_id#id#students,job_id#id#jobs"
+
+
+php artisan crud:model JobApplicant --table="job_applicants" --fillable="['title', 'is_active','created_by','created_at','updated_at','updated_by','student_id','job_id']" --relationships="student#belongsTo#App\Student;job#belongsTo#App\Job"
+
+php artisan crud:migration job_applicants --schema="title#string; student_id#integer;job_id#integer;created_by#integer;updated_by#integer;is_active#boolean" --relationships="student_id#id#students,job_id#id#jobs"
+
+
+php artisan crud:api-controller JobApplicantController --crud-name=job_applicant --model-name=JobApplicant
+
+
+
+
+

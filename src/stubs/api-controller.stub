@@ -1,84 +1,43 @@
 <?php
 
-namespace DummyNamespace;
+namespace App\Http\Controllers;
 
-use DummyRootNamespaceHttp\Requests;
-use DummyRootNamespaceHttp\Controllers\Controller;
-
-use DummyRootNamespace{{modelNamespace}}{{modelName}};
+use App\$_MODEL_NAME_$;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
-class DummyClass extends Controller
+class $_MODEL_NAME_PLURAL_$Controller extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function index()
     {
-        ${{crudName}} = {{modelName}}::latest()->paginate({{pagination}});
-
-        return ${{crudName}};
+        return $_MODEL_NAME_$::all();
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        {{validationRules}}
-        ${{crudNameSingular}} = {{modelName}}::create($request->all());
+        $$_MODEL_NAME_LOWER_$ = $_MODEL_NAME_$::create($request->all());
 
-        return response()->json(${{crudNameSingular}}, 201);
+        return $$_MODEL_NAME_LOWER_$;
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        ${{crudNameSingular}} = {{modelName}}::findOrFail($id);
-
-        return ${{crudNameSingular}};
+        return $_MODEL_NAME_$::findOrFail($id);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param  int  $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        {{validationRules}}
-        ${{crudNameSingular}} = {{modelName}}::findOrFail($id);
-        ${{crudNameSingular}}->update($request->all());
+        $$_MODEL_NAME_LOWER_$ = $_MODEL_NAME_$::findOrFail($id);
+        $$_MODEL_NAME_LOWER_$->update($request->all());
 
-        return response()->json(${{crudNameSingular}}, 200);
+        return $$_MODEL_NAME_LOWER_$;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        {{modelName}}::destroy($id);
+        $$_MODEL_NAME_LOWER_$ = $_MODEL_NAME_$::findOrFail($id);
+        $$_MODEL_NAME_LOWER_$->delete();
 
-        return response()->json(null, 204);
+        return '';
     }
 }

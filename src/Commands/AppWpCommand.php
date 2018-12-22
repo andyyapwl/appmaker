@@ -4,14 +4,14 @@ namespace SimpleCom\AppMaker\Commands;
 
 use Illuminate\Console\GeneratorCommand;
 
-class CrudMigrationCommand extends GeneratorCommand
+class AppWpCommand extends GeneratorCommand
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'crud:migration
+    protected $signature = 'app:wp
                             {name : The name of the migration.}
                             {--schema= : The name of the schema.}
                             {--indexes= : The fields to add an index to.}
@@ -24,7 +24,7 @@ class CrudMigrationCommand extends GeneratorCommand
      *
      * @var string
      */
-    protected $description = 'Create a new migration.';
+    protected $description = 'Create a new Wordpress.';
 
     /**
      * The type of class being generated.
@@ -33,36 +33,6 @@ class CrudMigrationCommand extends GeneratorCommand
      */
     protected $type = 'Migration';
 
-    /**
-     *  Migration column types collection.
-     *
-     * @var array
-     */
-    protected $typeLookup = [
-        'char' => 'char',
-        'date' => 'date',
-        'datetime' => 'dateTime',
-        'time' => 'time',
-        'timestamp' => 'timestamp',
-        'text' => 'text',
-        'mediumtext' => 'mediumText',
-        'longtext' => 'longText',
-        'json' => 'json',
-        'jsonb' => 'jsonb',
-        'binary' => 'binary',
-        'number' => 'integer',
-        'integer' => 'integer',
-        'bigint' => 'bigInteger',
-        'mediumint' => 'mediumInteger',
-        'tinyint' => 'tinyInteger',
-        'smallint' => 'smallInteger',
-        'boolean' => 'boolean',
-        'decimal' => 'decimal',
-        'double' => 'double',
-        'float' => 'float',
-        'enum' => 'enum',
-		'uuid' => 'uuid',
-    ];
 
     /**
      * Get the stub file for the generator.

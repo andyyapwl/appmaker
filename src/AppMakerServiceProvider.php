@@ -44,7 +44,9 @@ class AppMakerServiceProvider extends ServiceProvider
             'SimpleCom\AppMaker\Commands\CrudViewCommand',
             'SimpleCom\AppMaker\Commands\CrudLangCommand',
             'SimpleCom\AppMaker\Commands\CrudApiCommand',
-            'SimpleCom\AppMaker\Commands\CrudApiControllerCommand'
+			'SimpleCom\AppMaker\Commands\GenerateApiCommand',
+			'SimpleCom\AppMaker\Commands\AppWebapiCommand',
+			'SimpleCom\AppMaker\Commands\MySqlDbCommand'
         );
     }
 }

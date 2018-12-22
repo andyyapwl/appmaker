@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers;
+use Validator, DB, Hash, Mail;
+use Illuminate\Http\Request;
+use App\Controllers;
+use App\User;
+use App\UserProfile;
+use App\UserRole;
+use App\Student;
+use Carbon\Carbon;
+use App\Role;
+
+class StudentController extends Controller
+{
+	 public function getBySchool($id, Request $request){
+		 $students = Student::with(['Nationality','Race','User','User.Status','School','ProgrammeType'])
+					 ->join('users', function($join){
+						$join->on('students.user_id', '=', 'users.id');
+					})
+					 ->join('account_statuses', function($join){
+						$join->on('users.status_id', '=', 'account_statuses.id');
+					})
+					->where('Students.school_id', '=', $id)
+					->get(['Students.*']);	
+         return response($students, 200);
+    }
+	
+	public function getById($id, Request $request){
+		 $students = Student::with(['Nationality','Race','User','User.Status','School','ProgrammeType'])
+					 ->join('users', function($join){
+						$join->on('students.user_id', '=', 'users.id');
+					})
+					 ->join('account_statuses', function($join){
+						$join->on('users.status_id', '=', 'account_statuses.id');
+					})
+					->where('Students.id', '=', $id)
+					->get(['Students.*'])->first();	
+         return response($students, 200);
+    }
+	
+	public function register(Request $request){
+        $validator = Validator::make($request->all(), [
+            'username' => 'required',
+            'email' => 'required',
+            'password' => 'required',
+			 'dob' => 'required',
+			 'gender' => 'required',
+			 'identificationNo' => 'required',
+			 'race_id' => 'required',
+			 'phone' => 'required',
+			 'nationality_id' => 'required',
+			 'first_name' => 'required',
+			 'last_name' => 'required',
+			 'school' => 'required',
+			 'tier' => 'required',
+			 'preferred_contact_number' => 'required',
+			 'class_name' => 'required'
+        ]);
+
+        if($validator->fails()){
+            return response(['message' => 'Data cannot be processed'], 422);
+        } else {
+			
+			$username = $request->get('username');
+			$email = $request->get('email');
+			$password = $request->get('password');
+			$dob = $request->get('dob');
+			$gender = $request->get('gender');
+			$identificationNo = $request->get('identificationNo');
+			$race_id = $request->get('race_id');
+			$phone = $request->get('phone');
+			$nationality_id = $request->get('nationality_id');
+			$school = $request->get('school');
+			$school_id = School::where('title',$school)->first()->id;
+			$programme_type_id = ProgrammeType::where('title',$tier)->first()->id;
+			$class_name = $request->get('class_name');
+			$first_name = $request->get('first_name');
+			$last_name = $request->get('last_name');
+			
+			$name = $request->get('name');
+			$preferred_contact_number = $request->get('preferred_contact_number');
+			$checkExist = User::where('email',$email)->first();
+			
+            if($checkExist){
+                return response(['message' => 'Duplicate email'], 400);
+            } else {
+				
+                $user = new User();
+				$user->username = $username;
+				$user->name = $username;
+				$user->email = $email;
+				$user->first_name = $first_name;
+				$user->last_name = $last_name;
+				$user->name = $first_name . ' ' . $last_name;
+				$user->password = Hash::make($password);
+				$user->is_admin = 0;
+				$user->status_id = 1;
+				$user->is_active = 1;
+                $user->save();
+				
+				$studentRole = Role::where('title','=','Student')->first();
+				$userRole = new UserRole();
+				$userRole->user_id = $user->id;
+				$userRole->role_id = $studentRole->id;
+				$userRole->is_active = 1;
+				$userRole->title = "Untitled";
+				$userRole->save();
+					
+				$student = new Student();
+				$student->title = $name;
+				$student->user_id = $user->id;
+				$student->dob = $dob;
+				$student->gender = $gender;
+				$student->identificationNo = $identificationNo;
+				$student->race_id = $race_id;
+				$student->phone = $phone;
+				$student->nationality_id = $nationality_id;
+				$student->user_id = $user->id;
+				$student->preferred_contact_number = $preferred_contact_number;
+				$student->is_active = 1;
+				$student->programme_type_id = $programme_type_id;
+				$student->school_id = $school_id;
+				$student->class_name = $class_name;
+				$student->save();
+				
+                return response(['message' => 'Registration success'], 200);
+            }
+        }
+    }
+	
+    public function update(Request $request){
+        $validator = Validator::make($request->all(), [
+            'username' => 'required',
+            'mobile' => 'required'
+        ]);
+
+        if($validator->fails()){
+            return response(['message' => 'Data cannot be processed'], 422);
+        }
+		else {
+			$username = $request->get('username');
+			$mobile = $request->get('mobile');
+			$user = $request->user;
+			
+			$user->username = $username;
+			$user->save();
+			
+			$userId = $user->id;
+			$userProfile = UserProfile::where('user_id',$userId)->first();
+			$userProfile->mobile = $mobile;
+			$userProfile->save();
+			return response(['message' => 'Update OK'], 200);
+        }
+    }
+}
